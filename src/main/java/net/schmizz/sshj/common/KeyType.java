@@ -33,6 +33,22 @@ import java.util.Arrays;
 /** Type of key e.g. rsa, dsa */
 public enum KeyType {
 
+    ED25519("ssh-ed25519") {
+        @Override
+        public PublicKey readPubKeyFromBuffer(String type, Buffer<?> buf) throws GeneralSecurityException {
+            return null;
+        }
+
+        @Override
+        public void putPubKeyIntoBuffer(PublicKey pk, Buffer<?> buf) {
+
+        }
+
+        @Override
+        protected boolean isMyType(Key key) {
+            return false;
+        }
+    },
 
     /** SSH identifier for RSA keys */
     RSA("ssh-rsa") {

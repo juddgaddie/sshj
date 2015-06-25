@@ -22,11 +22,14 @@ public class CommandTest {
 
     @Test
     public void shouldExecuteBackgroundCommand() throws IOException {
-        SSHClient sshClient = fixture.setupConnectedDefaultClient();
+        SSHClient sshClient = fixture.setupDefaultClient();// fixture.setupConnectedDefaultClient();
+        sshClient.connect("172.16.37.129");
         sshClient.authPassword("jeroen", "jeroen");
         File file = new File(temp.getRoot(), "testdir");
         assertThat("File should not exist", !file.exists());
-        Session.Command exec = sshClient.startSession().exec("mkdir " + file.getPath() + " &");
+        Session session = sshClient.startSession();
+        session.allocateDefaultPTY();
+        Session.Command exec = session.exec("mkdir " + file.getPath() + " &");
         exec.join();
         assertThat("File should exist", file.exists());
         assertThat("File should be directory", file.isDirectory());

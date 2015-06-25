@@ -20,6 +20,7 @@ import net.schmizz.sshj.common.Factory;
 import net.schmizz.sshj.common.SecurityUtils;
 import net.schmizz.sshj.signature.SignatureDSA;
 import net.schmizz.sshj.signature.SignatureECDSA;
+import net.schmizz.sshj.signature.SignatureED25519;
 import net.schmizz.sshj.signature.SignatureRSA;
 import net.schmizz.sshj.transport.cipher.AES128CBC;
 import net.schmizz.sshj.transport.cipher.AES128CTR;
@@ -31,6 +32,7 @@ import net.schmizz.sshj.transport.cipher.BlowfishCBC;
 import net.schmizz.sshj.transport.cipher.Cipher;
 import net.schmizz.sshj.transport.cipher.TripleDESCBC;
 import net.schmizz.sshj.transport.compression.NoneCompression;
+import net.schmizz.sshj.transport.kex.Curve25519;
 import net.schmizz.sshj.transport.kex.DHG1;
 import net.schmizz.sshj.transport.kex.DHG14;
 import net.schmizz.sshj.transport.mac.HMACMD5;
@@ -97,10 +99,11 @@ public class DefaultConfig
     }
 
     protected void initKeyExchangeFactories(boolean bouncyCastleRegistered) {
-        if (bouncyCastleRegistered)
-            setKeyExchangeFactories(new DHG14.Factory(), new DHG1.Factory());
-        else
-            setKeyExchangeFactories(new DHG1.Factory());
+        if (bouncyCastleRegistered) {
+            setKeyExchangeFactories(new DHG14.Factory(), new DHG1.Factory(), new Curve25519.Factory());
+        } else {
+            setKeyExchangeFactories(new DHG1.Factory(), new Curve25519.Factory());
+        }
     }
 
     protected void initRandomFactory(boolean bouncyCastleRegistered) {
@@ -148,7 +151,7 @@ public class DefaultConfig
     }
 
     protected void initSignatureFactories() {
-        setSignatureFactories(new SignatureECDSA.Factory(), new SignatureRSA.Factory(), new SignatureDSA.Factory());
+        setSignatureFactories(new SignatureECDSA.Factory(), new SignatureRSA.Factory(), new SignatureDSA.Factory(), new SignatureED25519.Factory());
     }
 
     protected void initMACFactories() {

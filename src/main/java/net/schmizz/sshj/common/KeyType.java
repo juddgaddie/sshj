@@ -1,12 +1,12 @@
 /**
  * Copyright 2009 sshj contributors
- *
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,10 @@
  */
 package net.schmizz.sshj.common;
 
+import net.i2p.crypto.eddsa.EdDSAPrivateKey;
+import net.i2p.crypto.eddsa.EdDSAPublicKey;
+import net.i2p.crypto.eddsa.spec.EdDSANamedCurveTable;
+import net.i2p.crypto.eddsa.spec.EdDSAPublicKeySpec;
 import org.bouncycastle.asn1.nist.NISTNamedCurves;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.jce.spec.ECParameterSpec;
@@ -32,24 +36,28 @@ import java.util.Arrays;
 
 /** Type of key e.g. rsa, dsa */
 public enum KeyType {
-
     ED25519("ssh-ed25519") {
         @Override
         public PublicKey readPubKeyFromBuffer(String type, Buffer<?> buf) throws GeneralSecurityException {
-            return null;
+            EdDSAPublicKeySpec edDSAPublicKeySpec;
+            try {
+                edDSAPublicKeySpec = new EdDSAPublicKeySpec(buf.readBytes(), EdDSANamedCurveTable.getByName(EdDSANamedCurveTable.CURVE_ED25519_SHA512));
+            } catch (Buffer.BufferException e) {
+                throw new GeneralSecurityException(e);
+            }
+            return new EdDSAPublicKey(edDSAPublicKeySpec);
         }
 
         @Override
         public void putPubKeyIntoBuffer(PublicKey pk, Buffer<?> buf) {
-
+            buf.putString(sType).putBytes(((EdDSAPublicKey) pk).getAbyte());
         }
 
         @Override
         protected boolean isMyType(Key key) {
-            return false;
+            return (key instanceof EdDSAPublicKey || key instanceof EdDSAPrivateKey);
         }
     },
-
     /** SSH identifier for RSA keys */
     RSA("ssh-rsa") {
         @Override
@@ -132,14 +140,14 @@ public enum KeyType {
                 final byte[] y = new byte[(keyLen - 1) / 2];
                 buf.readRawBytes(x);
                 buf.readRawBytes(y);
-                if(log.isDebugEnabled()) {
+                if (log.isDebugEnabled()) {
                     log.debug(String.format("Key algo: %s, Key curve: %s, Key Len: %s, 0x04: %s\nx: %s\ny: %s",
-                            type,
-                            curveName,
-                            keyLen,
-                            x04,
-                            Arrays.toString(x),
-                            Arrays.toString(y))
+                                    type,
+                                    curveName,
+                                    keyLen,
+                                    x04,
+                                    Arrays.toString(x),
+                                    Arrays.toString(y))
                     );
                 }
 
@@ -172,11 +180,11 @@ public enum KeyType {
             final byte[] y = trimStartingZeros(point.getAffineY().toByteArray());
 
             buf.putString(sType)
-                .putString(NISTP_CURVE)
-                .putUInt32(1 + x.length + y.length)
-                .putRawBytes(new byte[] { (byte) 0x04 })
-                .putRawBytes(x)
-                .putRawBytes(y)
+                    .putString(NISTP_CURVE)
+                    .putUInt32(1 + x.length + y.length)
+                    .putRawBytes(new byte[]{(byte) 0x04})
+                    .putRawBytes(x)
+                    .putRawBytes(y)
             ;
         }
 
